@@ -34,7 +34,10 @@ class SubmissionPayload(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     user_id: str
     question_id: str
+    test_id: str
     selected_option: int
-    is_correct: Optional[bool] = False
-    marks: Optional[int] = 0
-    submitted_at: Optional[datetime] = datetime.now()
+
+class SubmissionResponse(SubmissionPayload):
+    subject: str
+    marks: int
+    submitted_at: datetime

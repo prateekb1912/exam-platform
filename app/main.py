@@ -7,7 +7,7 @@ from app.routes.question import questionRouter
 from app.routes.test import testRouter
 
 from app.schemas import SubmissionPayload, Question
-from app.db import userCollection, questionCollection, submissionCollection
+from app.db import userCollection, questionCollection, submissionCollection, testCollection
 
 app = FastAPI()
 
@@ -28,6 +28,10 @@ async def submit_answer(payload: SubmissionPayload):
             "_id": ObjectId(payload.user_id)
         })
 
+        test = await testCollection.find_one({
+            "_id": ObjectId(payload.test_id)
+        })
+
         question: Question = await questionCollection.find_one({
             "_id": ObjectId(payload.question_id)
         })
@@ -36,11 +40,14 @@ async def submit_answer(payload: SubmissionPayload):
         return {
             "status": "404 NOT FOUND",
             "user_id": payload.user_id,
-            "question_id": payload.question_id
+            "question_id": payload.question_id,
+            "test_id": payload.test_id
         }
     
     submission['is_correct'] = (question['answer_index'] == payload.selected_option)
-    submission['marks']= question['marks_correct'] if payload.is_correct else question['marks_incorrect']
+    submission['marks']= question['marks_correct'] if submission['is_correct'] else question['marks_incorrect']
+    submission['subject'] = question['subject']
+    submission['submited_at'] = datetime.now()
 
     res = await submissionCollection.insert_one(submission)
 

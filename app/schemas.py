@@ -20,6 +20,7 @@ class Test(BaseModel):
     title: str
     duration: Optional[int] = 180
     questions: Optional[list[str]] = []
+    ongoing: bool = True
 
 class Question(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)

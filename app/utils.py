@@ -20,10 +20,7 @@ async def calculate_total_scores(test_id):
 
     return [doc async for doc in submissionCollection.aggregate(pipeline)]
 
-
-async def calculate_ranks(test_id, aggregated_scores):
-    # aggregated_scores = await calculate_total_scores(test_id)
-
+async def calculate_ranks(aggregated_scores):
     total_users = len(aggregated_scores)
     rank = 1
     prev_score = None
@@ -49,7 +46,7 @@ async def calculate_ranks(test_id, aggregated_scores):
 
     return results
 
-async def calculate_subject_percentiles(test_id, aggregated_scores):
+async def calculate_subject_percentiles(aggregated_scores):
     for doc in aggregated_scores:
         subjects = defaultdict(int)
         for s in doc["subjects"]:

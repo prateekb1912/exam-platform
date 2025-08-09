@@ -4,6 +4,7 @@ from fastapi import APIRouter, status
 from app.schemas import Test
 from app.db import testCollection, submissionCollection
 from app.utils import calculate_total_scores
+from app.redis import cache_total_ranks
 
 from pymongo import ReturnDocument
 
@@ -40,8 +41,14 @@ async def add_questions_to_test(test_id: str, payload: dict):
     return test
 
 
-@testRouter.get("/{test_id}/results")
-async def getTestResults(test_id):
-    res = await calculate_total_scores(test_id)
+@testRouter.get("/{test_id}/complete")
+async def endTest(test_id: str):
+    await testCollection.find_one_and_update(
+        { "_id": ObjectId(test_id)}, 
+        {"$set": { "ongoing": False } }, 
+        return_document=ReturnDocument.AFTER
+    )
 
-    return res
+    scores = await calculate_total_scores(test_id)
+    await cache_total_ranks(test_id, scores)
+    

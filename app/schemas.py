@@ -1,28 +1,40 @@
 from bson import ObjectId
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 from typing import Annotated, Optional
-
+from datetime import datetime
 PyObjectId = Annotated[str, BeforeValidator(str)]
+
+model_config = ConfigDict(
+    populate_by_name=True,
+    json_encoders={ObjectId: str}
+)
+
 
 class User(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     username: str
-
-    model_config = ConfigDict(
-        populate_by_name=True,
-        json_encoders={ObjectId: str}
-    )
+    model_config = model_config
 
 class Test(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)    
     title: str
-    duration: int
-    questions: list[str] = []
+    duration: Optional[int] = 180
+    questions: Optional[list[str]] = []
 
 class Question(BaseModel):
-    test_id: str
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
     query: str
     options: list[str]
     answer_index: int
-    marks_correct: int = 5
-    marks_incorrect: int = -1
+    marks_correct: Optional[int] = 5
+    marks_incorrect: Optional[int] = -1
     subject: str
+
+class SubmissionPayload(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    user_id: str
+    question_id: str
+    selected_option: int
+    is_correct: Optional[bool] = False
+    marks: Optional[int] = 0
+    submitted_at: Optional[datetime] = datetime.now()

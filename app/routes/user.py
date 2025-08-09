@@ -1,8 +1,9 @@
 from bson import ObjectId
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 
 from app.schemas import User
 from app.db import userCollection
+
 
 userRouter = APIRouter()
 
@@ -13,9 +14,12 @@ async def get_users(user_id: str):
     })
     return user
 
-@userRouter.post("/", response_model=User)
+@userRouter.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(payload: User):
     user = payload.model_dump(by_alias=True, exclude=["id"])
     res = await userCollection.insert_one(user)
-
-    return res
+    
+    return {
+        "status": "ok",
+        "user_id": str(res.inserted_id)
+    }

@@ -1,7 +1,39 @@
-from fastapi import APIRouter
+from bson import ObjectId
+from fastapi import APIRouter, status
+
+from app.schemas import Test
+from app.db import testCollection
+
+from pymongo import ReturnDocument
 
 testRouter = APIRouter()
 
-@testRouter.get("/")
-def get_tests():
-    return {"tests": []}
+@testRouter.get("/{test_id}", response_model=Test)
+async def get_question(test_id: str):
+    test = await testCollection.find_one({
+        "_id": ObjectId(test_id)
+    })
+
+    return test
+
+@testRouter.post("/", status_code=status.HTTP_201_CREATED)
+async def create_question(payload: Test):
+    test = payload.model_dump(by_alias=True, exclude=["id"])
+    res = await testCollection.insert_one(test)
+
+    return {
+        "status": "ok",
+        "test_id": str(res.inserted_id)
+    }
+
+@testRouter.post("/{test_id}/questions", response_model=Test)
+async def add_questions_to_test(test_id: str, payload: dict):
+    question_ids = payload['questionIds']
+
+    test = await testCollection.find_one_and_update(
+        {"_id": ObjectId(test_id)},
+        {"$push": {"questions": {"$each": question_ids}}},
+        return_document=ReturnDocument.AFTER
+    )
+
+    return test

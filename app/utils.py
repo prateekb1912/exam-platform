@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from app.db import submissionCollection
 from app.td import serialize_tdigest, deserialize_tdigest, TDigest
-from app.redis import set_key, get_key
+from app.cache import set_key, get_key
 
 async def calculate_total_scores(test_id):
     pipeline = [

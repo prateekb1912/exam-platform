@@ -1,5 +1,5 @@
 import os
-import redis
+from redis.asyncio import Redis
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -7,7 +7,7 @@ load_dotenv()
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = 6379
 
-client = redis.Redis(host=REDIS_HOST, port= REDIS_PORT)
+client = Redis(host=REDIS_HOST, port= REDIS_PORT)
 
 def set_key(key, value):
     client.set(key, value)
@@ -23,7 +23,7 @@ def cache_total_ranks(test_id, aggregated_scores):
         pipe.zadd(f"leaderboard:{test_id}", {uid: total_score})
     pipe.execute()
 
-def get_ranks_from_cache(test_id, user_id):
+def get_user_rank_from_cache(test_id, user_id):
     total_users = client.zcard(f"leaderboard:{test_id}")
     rank = client.zrevrank(f"leaderboard:{test_id}", user_id)
     score = client.zscore(f"leaderboard:{test_id}", user_id)

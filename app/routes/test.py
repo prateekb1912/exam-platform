@@ -4,7 +4,7 @@ from fastapi import APIRouter, status
 from app.schemas import Test
 from app.db import testCollection
 from app.utils import calculate_total_scores, calculate_subject_percentiles
-from app.redis import cache_total_ranks, get_ranks_from_cache
+from app.cache import cache_total_ranks, get_user_rank_from_cache
 
 from pymongo import ReturnDocument
 
@@ -53,6 +53,8 @@ async def endTest(test_id: str):
     await cache_total_ranks(test_id, scores)
     await calculate_subject_percentiles(test_id, scores)
 
-@testRouter.get("/{test_id}/results")
-async def getTestResults(test_id: str):
-    res = await get_ranks_from_cache(test_id)
+@testRouter.get("/{test_id}/{user_id}/results")
+async def getTestResults(test_id: str, user_id: str):
+    res = await get_user_rank_from_cache(test_id, user_id)
+
+    return res

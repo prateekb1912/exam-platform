@@ -18,3 +18,10 @@ Also used the TDigest data structure to store subject-wise percentiles (t-digest
 
 The flow works after a test ends, either through a scheduler or an API call to calculate and cache final scores and ranks
 which then can be quickly read from the cache and even stored in a results collection if needed afterwards as and when needed for the user
+
+## Predictions using Mock Test Scores
+
+For predictions, again used TDigest structure which allows us to calculate percentile given our mock score and the real scores list
+
+We can also go for a more statistical approach with quantile mapping between mock and real distributions
+And, even go for a sophisticated machine learning model and train on historical data and calculate percentiles on the mock

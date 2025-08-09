@@ -9,6 +9,11 @@ REDIS_PORT = 6379
 
 client = redis.Redis(host=REDIS_HOST, port= REDIS_PORT)
 
+def set_key(key, value):
+    client.set(key, value)
+
+def get_key(key):
+    return client.get(key)
 
 def cache_total_ranks(test_id, aggregated_scores):
     pipe = client.pipeline()

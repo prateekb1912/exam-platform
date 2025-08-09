@@ -2,6 +2,8 @@ from bson import ObjectId
 from collections import defaultdict
 
 from app.db import submissionCollection
+from app.td import serialize_tdigest, deserialize_tdigest, TDigest
+from app.redis import set_key, get_key
 
 async def calculate_total_scores(test_id):
     pipeline = [
@@ -20,60 +22,28 @@ async def calculate_total_scores(test_id):
 
     return [doc async for doc in submissionCollection.aggregate(pipeline)]
 
-async def calculate_ranks(aggregated_scores):
-    total_users = len(aggregated_scores)
-    rank = 1
-    prev_score = None
-    results = []
-
-    for idx, doc in enumerate(aggregated_scores):
-        user_id = doc["_id"]
-        score = doc["total_score"]
-
-        if prev_score is None or score < prev_score:
-            rank = idx + 1
-        prev_score = score
-
-        percentile = 100.0 * (1 - (rank - 1) / total_users)
-
-        results.append({
-            "user_id": str(user_id),
-            "score": score,
-            "rank": rank,
-            "percentile": percentile
-        })
-    
-
-    return results
-
-async def calculate_subject_percentiles(aggregated_scores):
+async def calculate_subject_percentiles(test_id, aggregated_scores):
     for doc in aggregated_scores:
         subjects = defaultdict(int)
         for s in doc["subjects"]:
             subjects[s["subject"]] += s["score"]
         doc["subjects"] = dict(subjects)
 
-    subject_score_lists = defaultdict(list)
+    subject_digests = defaultdict(TDigest)
     for doc in aggregated_scores:
         for sub, sc in doc["subjects"].items():
-            subject_score_lists[sub].append(sc)
+            subject_digests[sub].update(sc)
 
-    subject_percentile_map = {}
-    for sub, scores in subject_score_lists.items():
-        scores.sort(reverse=True)
-        total = len(scores)
-        score_to_percentile = {}
-        rank = 1
-        prev_score = None
-        for idx, score in enumerate(scores):
-            if prev_score is None or score < prev_score:
-                rank = idx + 1
-            prev_score = score
-            score_to_percentile[score] = 100.0 * (1 - (rank - 1) / total)
-        subject_percentile_map[sub] = score_to_percentile
-
+    for sub, td in subject_digests.items():
+        set_key(f"tdigest:{test_id}:{sub}", serialize_tdigest(td))
+    
     for doc in aggregated_scores:
-        doc["subject_percentiles"] = {
-            sub: subject_percentile_map[sub][sc]
-            for sub, sc in doc["subjects"].items()
-        }
+        doc["subject_percentiles"] = {}
+        for sub, sc in doc["subjects"].items():
+            td_data = get_key(f"tdigest:{test_id}:{sub}")
+            if td_data:
+                td = deserialize_tdigest(td_data.decode())
+                percentile = 100.0 * (1 - td.rank(sc))
+                doc["subject_percentiles"][sub] = percentile
+
+    return aggregated_scores

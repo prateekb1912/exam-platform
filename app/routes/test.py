@@ -2,9 +2,9 @@ from bson import ObjectId
 from fastapi import APIRouter, status
 
 from app.schemas import Test
-from app.db import testCollection, submissionCollection
-from app.utils import calculate_total_scores
-from app.redis import cache_total_ranks
+from app.db import testCollection
+from app.utils import calculate_total_scores, calculate_subject_percentiles
+from app.redis import cache_total_ranks, get_ranks_from_cache
 
 from pymongo import ReturnDocument
 
@@ -41,7 +41,7 @@ async def add_questions_to_test(test_id: str, payload: dict):
     return test
 
 
-@testRouter.get("/{test_id}/complete")
+@testRouter.post("/{test_id}/complete")
 async def endTest(test_id: str):
     await testCollection.find_one_and_update(
         { "_id": ObjectId(test_id)}, 
@@ -51,4 +51,8 @@ async def endTest(test_id: str):
 
     scores = await calculate_total_scores(test_id)
     await cache_total_ranks(test_id, scores)
-    
+    await calculate_subject_percentiles(test_id, scores)
+
+@testRouter.get("/{test_id}/results")
+async def getTestResults(test_id: str):
+    res = await get_ranks_from_cache(test_id)

@@ -3,6 +3,7 @@ from fastapi import APIRouter, status
 
 from app.schemas import Test
 from app.db import testCollection, submissionCollection
+from app.utils import calculate_total_scores
 
 from pymongo import ReturnDocument
 
@@ -41,15 +42,6 @@ async def add_questions_to_test(test_id: str, payload: dict):
 
 @testRouter.get("/{test_id}/results")
 async def getTestResults(test_id):
-    pipeline = [
-        {"$match": {"test_id": ObjectId(test_id)}},
-        {"$group": {
-            "_id": "$user_id",
-            "total_score": {"$sum": "$marks"},
-            "subjects": {
-                "$push": {"subject": "$subject", "score": "$marks"}
-            }
-        }}
-    ]
+    res = await calculate_total_scores(test_id)
 
-    return [doc async for doc in submissionCollection.aggregate(pipeline)]
+    return res

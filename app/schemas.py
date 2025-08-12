@@ -16,6 +16,9 @@ class User(BaseModel):
     model_config = model_config
 
 class Test(BaseModel):
+    """
+        Adding a questions to track the questios associated with a test instead of mapping test_id and questions seperately
+    """
     id: Optional[PyObjectId] = Field(alias="_id", default=None)    
     title: str
     duration: Optional[int] = 180
@@ -23,6 +26,9 @@ class Test(BaseModel):
     ongoing: bool = True
 
 class Question(BaseModel):
+    """
+        Independent of the tests; can be used in multiple tests and can be accessed in a question bank of sorts.
+    """
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     query: str
     options: list[str]

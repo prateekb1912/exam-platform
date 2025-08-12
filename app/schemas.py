@@ -38,6 +38,9 @@ class Question(BaseModel):
     subject: str
 
 class SubmissionPayload(BaseModel):
+    """
+        Single question submission response (can be extended to support multiple question submission by having a question_id -> selected_option map)
+    """
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     user_id: str
     question_id: str

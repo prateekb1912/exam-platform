@@ -7,6 +7,21 @@ from app.db import submissionCollection
 from tdigest import TDigest
 from app.cache import set_key, get_key
 
+"""
+Sample total_scores document:
+
+{
+  _id: ObjectId('689783d79cf4803f0a8b14c4'),
+  total_score: 88,
+  subjects: [
+    {
+      subject: 'Math',
+      score: 88
+    }
+  ]
+}
+"""
+
 async def calculate_total_scores(test_id):
     pipeline = [
         {"$match": {"test_id": ObjectId(test_id)}},
